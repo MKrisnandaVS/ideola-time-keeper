@@ -14,7 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      time_logs: {
+        Row: {
+          client_name: string
+          duration_minutes: number | null
+          end_time: string | null
+          id: number
+          project_name: string
+          project_type: string
+          start_time: string
+          user_name: string
+        }
+        Insert: {
+          client_name: string
+          duration_minutes?: number | null
+          end_time?: string | null
+          id?: number
+          project_name: string
+          project_type: string
+          start_time?: string
+          user_name: string
+        }
+        Update: {
+          client_name?: string
+          duration_minutes?: number | null
+          end_time?: string | null
+          id?: number
+          project_name?: string
+          project_type?: string
+          start_time?: string
+          user_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
