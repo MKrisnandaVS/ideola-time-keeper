@@ -54,11 +54,11 @@ const TimeTracker = () => {
 
     try {
       const { data, error } = await supabase
-        .from("time_logs")
+        .from("time_logs" as any)
         .select("*")
         .eq("user_name", savedUser)
         .is("end_time", null)
-        .maybeSingle();
+        .maybeSingle() as { data: ActiveSession | null; error: any };
 
       if (error) throw error;
 
@@ -115,7 +115,7 @@ const TimeTracker = () => {
 
     try {
       const { data, error } = await supabase
-        .from("time_logs")
+        .from("time_logs" as any)
         .insert({
           user_name: userName,
           client_name: clientName,
@@ -124,7 +124,7 @@ const TimeTracker = () => {
           start_time: new Date().toISOString(),
         })
         .select()
-        .single();
+        .single() as { data: ActiveSession | null; error: any };
 
       if (error) throw error;
 
@@ -148,12 +148,12 @@ const TimeTracker = () => {
       const durationMinutes = (endTime.getTime() - startTime.getTime()) / 60000;
 
       const { error } = await supabase
-        .from("time_logs")
+        .from("time_logs" as any)
         .update({
           end_time: endTime.toISOString(),
           duration_minutes: durationMinutes,
         })
-        .eq("id", activeSession.id);
+        .eq("id", activeSession.id) as { error: any };
 
       if (error) throw error;
 
