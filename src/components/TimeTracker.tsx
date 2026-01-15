@@ -54,7 +54,7 @@ const TimeTracker = () => {
 
     try {
       const { data, error } = await supabase
-        .from("time_logs" as any)
+        .from("time_tracker_logs")
         .select("*")
         .eq("user_name", savedUser)
         .is("end_time", null)
@@ -115,7 +115,7 @@ const TimeTracker = () => {
 
     try {
       const { data, error } = await supabase
-        .from("time_logs" as any)
+        .from("time_tracker_logs")
         .insert({
           user_name: userName,
           client_name: clientName,
@@ -148,7 +148,7 @@ const TimeTracker = () => {
       const durationMinutes = (endTime.getTime() - startTime.getTime()) / 60000;
 
       const { error } = await supabase
-        .from("time_logs" as any)
+        .from("time_tracker_logs")
         .update({
           end_time: endTime.toISOString(),
           duration_minutes: durationMinutes,
