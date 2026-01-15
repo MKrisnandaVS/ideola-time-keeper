@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
@@ -12,6 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Play, Square } from "lucide-react";
 import { toast } from "sonner";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 const USERS = ["KRISNANDA", "NAOMI", "RIZKA", "ZIZE"];
 const CLIENTS = ["GELATO DI LENNO", "SANSPOWER", "RUMAH KAPAS", "YASINDO", "IDEOLA"];
@@ -35,6 +38,14 @@ const TimeTracker = () => {
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Ref to track session for beforeunload event
+  const activeSessionRef = useRef<ActiveSession | null>(null);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    activeSessionRef.current = activeSession;
+  }, [activeSession]);
 
   // Load user from localStorage on mount
   useEffect(() => {
@@ -86,6 +97,53 @@ const TimeTracker = () => {
   useEffect(() => {
     checkActiveSession();
   }, [checkActiveSession]);
+
+  // Auto-stop on browser close/refresh using sendBeacon
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const session = activeSessionRef.current;
+      if (!session) return;
+
+      const endTime = new Date();
+      const startTime = new Date(session.start_time);
+      const durationMinutes = (endTime.getTime() - startTime.getTime()) / 60000;
+
+      // Use sendBeacon for reliable delivery on page unload
+      const payload = JSON.stringify({
+        end_time: endTime.toISOString(),
+        duration_minutes: durationMinutes,
+      });
+
+      // Supabase REST API endpoint for updating
+      const url = `${SUPABASE_URL}/rest/v1/time_logs?id=eq.${session.id}`;
+      
+      navigator.sendBeacon(
+        url,
+        new Blob([payload], { type: "application/json" })
+      );
+
+      // Also send with fetch as backup (sendBeacon doesn't support custom headers well)
+      fetch(url, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${SUPABASE_KEY}`,
+          "Prefer": "return=minimal",
+        },
+        body: payload,
+        keepalive: true, // Allows request to outlive the page
+      }).catch(() => {
+        // Silently fail - sendBeacon might have worked
+      });
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
 
   // Timer interval
   useEffect(() => {
