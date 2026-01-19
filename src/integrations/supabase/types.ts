@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          id: number
+          username: string
+          password_hash: string
+          role: 'admin' | 'client'
+          full_name: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: never
+          username: string
+          password_hash: string
+          role: 'admin' | 'client'
+          full_name: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: never
+          username?: string
+          password_hash?: string
+          role?: 'admin' | 'client'
+          full_name?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

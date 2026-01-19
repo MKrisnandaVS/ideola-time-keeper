@@ -1,5 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { clearSession, getCurrentUser } from "@/services/auth.service";
+import {
+  checkActiveSession as checkActiveSessionService,
+  startTracking as startTrackingService,
+  stopTracking as stopTrackingService,
+} from "@/services/timetracker.service";
+import {
+  getClientNames,
+  getProjectTypeNames,
+} from "@/services/client-project-type.service";
+import type { ActiveSession } from "@/types";
 import {
   Select,
   SelectContent,
@@ -10,24 +21,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Play, Square } from "lucide-react";
+import { Play, Square, LogOut } from "lucide-react";
 import { toast } from "sonner";
-
-const USERS = ["KRISNANDA", "NAOMI", "RIZKA", "ZIZE"];
-const CLIENTS = ["GELATO DI LENNO", "SANSPOWER", "RUMAH KAPAS", "YASINDO", "IDEOLA"];
-const PROJECT_TYPES = ["VISUAL IMAGE", "CAROUSEL", "VIDEO MOTION", "GENERAL"];
-
-interface ActiveSession {
-  id: number;
-  user_name: string;
-  client_name: string;
-  project_type: string;
-  project_name: string;
-  start_time: string;
-}
+import ThemeToggle from "@/components/shared/ThemeToggle";
 
 const TimeTracker = () => {
-  const [userName, setUserName] = useState("");
+  const navigate = useNavigate();
+  const user = getCurrentUser();
+  const [clients, setClients] = useState<string[]>([]);
+  const [projectTypes, setProjectTypes] = useState<string[]>([]);
+  const [userName, setUserName] = useState(user?.username || "");
   const [clientName, setClientName] = useState("");
   const [projectType, setProjectType] = useState("");
   const [projectName, setProjectName] = useState("");
@@ -35,32 +38,59 @@ const TimeTracker = () => {
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [usingFallback, setUsingFallback] = useState(false);
 
-  // Load user from localStorage on mount
+  // Fetch dynamic clients and project types
   useEffect(() => {
-    const savedUser = localStorage.getItem("ideola_user");
-    if (savedUser && USERS.includes(savedUser)) {
-      setUserName(savedUser);
-    }
+    const fetchDynamicData = async () => {
+      try {
+        console.log("Fetching client and project type data...");
+        const [fetchedClients, fetchedProjectTypes] = await Promise.all([
+          getClientNames(),
+          getProjectTypeNames(),
+        ]);
+        
+        console.log("Fetched clients:", fetchedClients);
+        console.log("Fetched project types:", fetchedProjectTypes);
+        
+        // If we get empty arrays, use fallback values
+        const finalClients = fetchedClients.length > 0 
+          ? fetchedClients 
+          : ["GELATO DI LENNO", "SANSPOWER", "RUMAH KAPAS", "YASINDO", "IDEOLA"];
+          
+        const finalProjectTypes = fetchedProjectTypes.length > 0 
+          ? fetchedProjectTypes 
+          : ["VISUAL IMAGE", "CAROUSEL", "VIDEO MOTION", "GENERAL"];
+        
+        setClients(finalClients);
+        setProjectTypes(finalProjectTypes);
+        setUsingFallback(fetchedClients.length === 0 || fetchedProjectTypes.length === 0);
+        
+        if (fetchedClients.length === 0 || fetchedProjectTypes.length === 0) {
+          console.warn("Using fallback values for clients/project types");
+          toast.info("Using default client and project type values");
+        }
+      } catch (error) {
+        console.error("Error fetching dynamic data:", error);
+        toast.error("Failed to load clients and project types, using defaults");
+        // Fallback to default values if fetch fails
+        setClients(["GELATO DI LENNO", "SANSPOWER", "RUMAH KAPAS", "YASINDO", "IDEOLA"]);
+        setProjectTypes(["VISUAL IMAGE", "CAROUSEL", "VIDEO MOTION", "GENERAL"]);
+      }
+    };
+
+    fetchDynamicData();
   }, []);
 
   // Check for active session on mount
   const checkActiveSession = useCallback(async () => {
-    const savedUser = localStorage.getItem("ideola_user");
-    if (!savedUser) {
+    if (!user) {
       setIsLoading(false);
       return;
     }
 
     try {
-      const { data, error } = await supabase
-        .from("time_tracker_logs")
-        .select("*")
-        .eq("user_name", savedUser)
-        .is("end_time", null)
-        .maybeSingle() as { data: ActiveSession | null; error: any };
-
-      if (error) throw error;
+      const data = await checkActiveSessionService(user.username);
 
       if (data) {
         setActiveSession(data);
@@ -81,7 +111,7 @@ const TimeTracker = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     checkActiveSession();
@@ -89,12 +119,12 @@ const TimeTracker = () => {
 
   // Timer interval
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isTracking) {
-      interval = setInterval(() => {
-        setElapsedSeconds((prev) => prev + 1);
-      }, 1000);
-    }
+    if (!isTracking) return;
+    
+    const interval = setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+    
     return () => clearInterval(interval);
   }, [isTracking]);
 
@@ -114,21 +144,14 @@ const TimeTracker = () => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from("time_tracker_logs")
-        .insert({
-          user_name: userName,
-          client_name: clientName,
-          project_type: projectType,
-          project_name: projectName.toUpperCase(),
-          start_time: new Date().toISOString(),
-        })
-        .select()
-        .single() as { data: ActiveSession | null; error: any };
+      const data = await startTrackingService({
+        user_name: userName,
+        client_name: clientName,
+        project_type: projectType,
+        project_name: projectName.toUpperCase(),
+        start_time: new Date().toISOString(),
+      });
 
-      if (error) throw error;
-
-      localStorage.setItem("ideola_user", userName);
       setActiveSession(data);
       setIsTracking(true);
       setElapsedSeconds(0);
@@ -143,19 +166,7 @@ const TimeTracker = () => {
     if (!activeSession) return;
 
     try {
-      const endTime = new Date();
-      const startTime = new Date(activeSession.start_time);
-      const durationMinutes = (endTime.getTime() - startTime.getTime()) / 60000;
-
-      const { error } = await supabase
-        .from("time_tracker_logs")
-        .update({
-          end_time: endTime.toISOString(),
-          duration_minutes: durationMinutes,
-        })
-        .eq("id", activeSession.id) as { error: any };
-
-      if (error) throw error;
+      await stopTrackingService(activeSession.id, activeSession.start_time);
 
       setIsTracking(false);
       setActiveSession(null);
@@ -170,6 +181,16 @@ const TimeTracker = () => {
     }
   };
 
+  const handleLogout = () => {
+    if (isTracking) {
+      toast.error("Please stop tracking before logging out");
+      return;
+    }
+    clearSession();
+    toast.success("Logged out successfully");
+    navigate("/login");
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -179,18 +200,30 @@ const TimeTracker = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-card border-border">
-        <CardContent className="p-6">
-          {/* Logo/Title */}
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-primary tracking-wider">
-              IDEOLA
-            </h1>
-            <p className="text-muted-foreground text-sm uppercase tracking-widest">
-              Time Tracker
-            </p>
-          </div>
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Fixed Header with Theme Toggle */}
+      <header className="sticky top-0 z-50 bg-background border-b border-border py-3 px-4">
+        <div className="flex justify-end">
+          <ThemeToggle />
+        </div>
+      </header>
+      
+      {/* Main Content */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-card border-border">
+          <CardContent className="p-6">
+            {/* Logo/Title */}
+            <div className="text-center mb-8">
+              <h1 className="text-2xl font-bold text-primary tracking-wider">
+                IDEOLA
+              </h1>
+              <p className="text-muted-foreground text-sm uppercase tracking-widest">
+                Time Tracker
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Logged in as: <span className="font-semibold">{user?.full_name}</span> (@{user?.username})
+              </p>
+            </div>
 
           {isTracking ? (
             /* Active Tracking View */
@@ -224,29 +257,6 @@ const TimeTracker = () => {
           ) : (
             /* Idle View - Input Form */
             <div className="space-y-4">
-              {/* User Name */}
-              <div className="space-y-2">
-                <label className="text-xs text-muted-foreground uppercase tracking-wider">
-                  User Name
-                </label>
-                <Select value={userName} onValueChange={setUserName}>
-                  <SelectTrigger className="uppercase bg-input border-border text-foreground">
-                    <SelectValue placeholder="SELECT USER" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border">
-                    {USERS.map((user) => (
-                      <SelectItem
-                        key={user}
-                        value={user}
-                        className="uppercase text-foreground"
-                      >
-                        {user}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Client Name */}
               <div className="space-y-2">
                 <label className="text-xs text-muted-foreground uppercase tracking-wider">
@@ -257,7 +267,7 @@ const TimeTracker = () => {
                     <SelectValue placeholder="SELECT CLIENT" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
-                    {CLIENTS.map((client) => (
+                    {clients.map((client) => (
                       <SelectItem
                         key={client}
                         value={client}
@@ -280,7 +290,7 @@ const TimeTracker = () => {
                     <SelectValue placeholder="SELECT TYPE" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
-                    {PROJECT_TYPES.map((type) => (
+                    {projectTypes.map((type) => (
                       <SelectItem
                         key={type}
                         value={type}
@@ -314,11 +324,22 @@ const TimeTracker = () => {
                 <Play className="w-5 h-5 mr-2" />
                 Start Tracking
               </Button>
+
+              {/* Logout Button */}
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                className="w-full uppercase font-bold py-3"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
             </div>
           )}
         </CardContent>
       </Card>
     </div>
+  </div>
   );
 };
 
