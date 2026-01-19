@@ -36,6 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ThemeToggle from "@/components/shared/ThemeToggle";
+import MonthlyClientCalendar from "@/components/admin/MonthlyClientCalendar";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -43,7 +44,8 @@ const AdminDashboard = () => {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("7days");
   const [timeUnit, setTimeUnit] = useState<TimeUnit>("hours");
   const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
-  const [allLogs, setAllLogs] = useState<TimeLog[]>([]);
+  const [allLogs, setAllLogs] = useState<TimeLog[]>([]); // Filtered logs for charts
+  const [unfilteredLogs, setUnfilteredLogs] = useState<TimeLog[]>([]); // All logs for calendar
   const [allUsers, setAllUsers] = useState<string[]>([]);
   const [allClients, setAllClients] = useState<string[]>([]);
   
@@ -79,7 +81,7 @@ const AdminDashboard = () => {
         return;
       }
 
-      // Get user details
+      // Get user details only if needed
       const userMap = await fetchUserFullNames();
 
       const active: ActiveUser[] = activeLogs.map(log => {
@@ -104,14 +106,18 @@ const AdminDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch completed logs within date range with pagination
-      const logs = await fetchCompletedLogs(timeFilter, 1000, 0);
+      // Fetch both filtered and unfiltered logs simultaneously for efficiency
+      const [filteredLogs, allTimeLogs] = await Promise.all([
+        fetchCompletedLogs(timeFilter, 1000, 0), // For charts
+        fetchCompletedLogs("365days", 5000, 0)   // For calendar (reduced from 10000 to 5000 for efficiency)
+      ]);
 
-      setAllLogs(logs || []);
+      setAllLogs(filteredLogs || []);
+      setUnfilteredLogs(allTimeLogs || []);
 
-      // Extract unique users and clients
-      const users = [...new Set((logs || []).map(log => log.user_name))];
-      const clients = [...new Set((logs || []).map(log => log.client_name))];
+      // Extract unique users and clients from filtered logs
+      const users = [...new Set((filteredLogs || []).map(log => log.user_name))];
+      const clients = [...new Set((filteredLogs || []).map(log => log.client_name))];
       
       setAllUsers(users);
       setAllClients(clients);
@@ -508,6 +514,11 @@ const AdminDashboard = () => {
             )}
           </CardContent>
         </Card>
+        
+        {/* 5. Monthly Client Calendar */}
+        <MonthlyClientCalendar 
+          logs={unfilteredLogs}
+        />
       </div>
     </div>
   );

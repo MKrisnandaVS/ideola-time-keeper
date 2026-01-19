@@ -37,6 +37,7 @@ const TimeTracker = () => {
   const [isTracking, setIsTracking] = useState(false);
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [startTimeRef, setStartTimeRef] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [usingFallback, setUsingFallback] = useState(false);
 
@@ -44,14 +45,10 @@ const TimeTracker = () => {
   useEffect(() => {
     const fetchDynamicData = async () => {
       try {
-        console.log("Fetching client and project type data...");
         const [fetchedClients, fetchedProjectTypes] = await Promise.all([
           getClientNames(),
           getProjectTypeNames(),
         ]);
-        
-        console.log("Fetched clients:", fetchedClients);
-        console.log("Fetched project types:", fetchedProjectTypes);
         
         // If we get empty arrays, use fallback values
         const finalClients = fetchedClients.length > 0 
@@ -100,11 +97,12 @@ const TimeTracker = () => {
         setProjectName(data.project_name);
         setIsTracking(true);
 
-        // Calculate elapsed time from server start_time
+        // Calculate elapsed time from server start_time and store reference
         const startTime = new Date(data.start_time).getTime();
         const now = Date.now();
         const elapsed = Math.floor((now - startTime) / 1000);
         setElapsedSeconds(elapsed);
+        setStartTimeRef(startTime);
       }
     } catch (error) {
       console.error("Error checking active session:", error);
@@ -117,24 +115,39 @@ const TimeTracker = () => {
     checkActiveSession();
   }, [checkActiveSession]);
 
-  // Timer interval
+  // Timer interval - calculate actual elapsed time from start_time
   useEffect(() => {
     if (!isTracking) return;
-    
-    const interval = setInterval(() => {
-      setElapsedSeconds((prev) => prev + 1);
-    }, 1000);
+
+    const updateElapsedTime = () => {
+      // Always prioritize startTimeRef if available (more accurate)
+      if (startTimeRef !== null) {
+        const now = Date.now();
+        const elapsed = Math.floor((now - startTimeRef) / 1000);
+        setElapsedSeconds(elapsed);
+      } else if (activeSession) {
+        // Fallback to server start_time if we don't have startTimeRef
+        const serverStartTime = new Date(activeSession.start_time).getTime();
+        const now = Date.now();
+        const elapsed = Math.floor((now - serverStartTime) / 1000);
+        setElapsedSeconds(elapsed);
+      }
+    };
+
+    // Update immediately to ensure accurate time
+    updateElapsedTime();
+
+    const interval = setInterval(updateElapsedTime, 1000);
     
     return () => clearInterval(interval);
-  }, [isTracking]);
+  }, [isTracking, activeSession, startTimeRef]);
 
   const formatTime = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${hrs.toString().padStart(2, "0")}:${mins
-      .toString()
-      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    // Using template literals with padStart for consistent formatting
+    return `${hrs.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   const handleStart = async () => {
@@ -155,6 +168,8 @@ const TimeTracker = () => {
       setActiveSession(data);
       setIsTracking(true);
       setElapsedSeconds(0);
+      // Set start time reference from the server timestamp to ensure accuracy
+      setStartTimeRef(new Date(data.start_time).getTime());
       toast.success("Tracking started!");
     } catch (error) {
       console.error("Error starting tracking:", error);
@@ -171,6 +186,7 @@ const TimeTracker = () => {
       setIsTracking(false);
       setActiveSession(null);
       setElapsedSeconds(0);
+      setStartTimeRef(null); // Reset start time reference
       setClientName("");
       setProjectType("");
       setProjectName("");

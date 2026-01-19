@@ -45,19 +45,30 @@ export const startTracking = async (formData: TimeTrackerFormData) => {
  * Stop time tracking session
  */
 export const stopTracking = async (sessionId: number, startTime: string) => {
-  const endTime = new Date();
+  // Record the exact end time
+  const endTime = new Date().toISOString();
+  
+  // Calculate duration precisely using the stored timestamps
   const start = new Date(startTime);
-  const durationMinutes = (endTime.getTime() - start.getTime()) / 60000;
-
+  const end = new Date(endTime);
+  const durationMinutes = (end.getTime() - start.getTime()) / 60000;
+  
+  // Store both timestamps and calculated duration
   const { error } = await supabase
     .from("time_tracker_logs")
     .update({
-      end_time: endTime.toISOString(),
-      duration_minutes: durationMinutes,
+      end_time: endTime,
+      duration_minutes: durationMinutes
     })
     .eq("id", sessionId);
 
   if (error) throw error;
+  
+  // Return the calculated values for consistency check
+  return {
+    end_time: endTime,
+    duration_minutes: durationMinutes
+  };
 };
 
 /**
