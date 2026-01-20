@@ -1,16 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { clearSession, getCurrentUser } from "@/services/auth.service";
 import {
   checkActiveSession as checkActiveSessionService,
   startTracking as startTrackingService,
   stopTracking as stopTrackingService,
+  fetchTodaysLogs,
 } from "@/services/timetracker.service";
 import {
   getClientNames,
   getProjectTypeNames,
 } from "@/services/client-project-type.service";
-import type { ActiveSession } from "@/types";
+import type { ActiveSession, User, TimeLog } from "@/types";
 import {
   Select,
   SelectContent,
@@ -24,10 +25,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Play, Square, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import ThemeToggle from "@/components/shared/ThemeToggle";
+import DailyTask from "@/components/client/DailyTask";
 
 const TimeTracker = () => {
   const navigate = useNavigate();
-  const user = getCurrentUser();
+  const user = getCurrentUser() as User | null;
   const [clients, setClients] = useState<string[]>([]);
   const [projectTypes, setProjectTypes] = useState<string[]>([]);
   const [userName, setUserName] = useState(user?.username || "");
@@ -40,6 +42,8 @@ const TimeTracker = () => {
   const [startTimeRef, setStartTimeRef] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [usingFallback, setUsingFallback] = useState(false);
+  const [dailyLogs, setDailyLogs] = useState<TimeLog[]>([]);
+  const lastFetchRef = useRef<number>(0); // Track last fetch time
 
   // Fetch dynamic clients and project types
   useEffect(() => {
@@ -111,9 +115,54 @@ const TimeTracker = () => {
     }
   }, [user]);
 
+  // Function to fetch today's logs with rate limiting
+  const fetchTodaysTasks = useCallback(async () => {
+    const now = Date.now();
+    // Only fetch if it's been more than 30 seconds since last fetch
+    if (now - lastFetchRef.current < 30000) {
+      return; // Skip fetch if less than 30 seconds have passed
+    }
+    
+    lastFetchRef.current = now;
+    
+    if (user?.username) {
+      try {
+        const logs = await fetchTodaysLogs(user.username);
+        setDailyLogs(logs || []);
+      } catch (error) {
+        console.error("Error fetching today's logs:", error);
+        // Set to empty array if there's an error to prevent further issues
+        setDailyLogs([]);
+      }
+    } else {
+      // If user is not available, set to empty array
+      setDailyLogs([]);
+    }
+  }, [user]); // Keep user in dependency but be careful with effects that use this
+
   useEffect(() => {
     checkActiveSession();
   }, [checkActiveSession]);
+
+  // Fetch today's logs when component mounts
+  useEffect(() => {
+    if (user) {
+      fetchTodaysTasks();
+    }
+  }, [user, fetchTodaysTasks]); // Include fetchTodaysTasks in dependencies
+  
+  // Refresh daily logs periodically (every 5 minutes) when tracking is not active
+  useEffect(() => {
+    if (!isTracking) {
+      const interval = setInterval(() => {
+        fetchTodaysTasks();
+      }, 300000); // 5 minutes = 300000 ms
+      
+      return () => clearInterval(interval);
+    }
+  }, [isTracking, fetchTodaysTasks]);
+
+
 
   // Timer interval - calculate actual elapsed time from start_time
   useEffect(() => {
@@ -140,7 +189,7 @@ const TimeTracker = () => {
     const interval = setInterval(updateElapsedTime, 1000);
     
     return () => clearInterval(interval);
-  }, [isTracking, activeSession, startTimeRef]);
+  }, [isTracking, activeSession, startTimeRef]); // This dependency array looks correct
 
   const formatTime = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
@@ -165,9 +214,10 @@ const TimeTracker = () => {
         start_time: new Date().toISOString(),
       });
 
+      // Update state only after successful API call
+      setElapsedSeconds(0);
       setActiveSession(data);
       setIsTracking(true);
-      setElapsedSeconds(0);
       // Set start time reference from the server timestamp to ensure accuracy
       setStartTimeRef(new Date(data.start_time).getTime());
       toast.success("Tracking started!");
@@ -183,6 +233,7 @@ const TimeTracker = () => {
     try {
       await stopTrackingService(activeSession.id, activeSession.start_time);
 
+      // Update state first to give immediate feedback to user
       setIsTracking(false);
       setActiveSession(null);
       setElapsedSeconds(0);
@@ -190,7 +241,9 @@ const TimeTracker = () => {
       setClientName("");
       setProjectType("");
       setProjectName("");
+      
       toast.success("Tracking stopped!");
+      
     } catch (error) {
       console.error("Error stopping tracking:", error);
       toast.error("Failed to stop tracking");
@@ -354,6 +407,7 @@ const TimeTracker = () => {
           )}
         </CardContent>
       </Card>
+      <DailyTask logs={dailyLogs} username={user?.username} fullName={user?.full_name} />
     </div>
   </div>
   );

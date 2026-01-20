@@ -140,3 +140,25 @@ export const fetchCompletedLogs = async (
   if (error) throw error;
   return data as TimeLog[];
 };
+
+/**
+ * Fetch today's completed logs for a specific user
+ */
+export const fetchTodaysLogs = async (username: string) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const { data, error } = await supabase
+    .from("time_tracker_logs")
+    .select("*")
+    .eq("user_name", username)
+    .not("end_time", "is", null)
+    .gte("end_time", today.toISOString())
+    .lt("end_time", tomorrow.toISOString())
+    .order("end_time", { ascending: false });
+
+  if (error) throw error;
+  return data as TimeLog[];
+};
