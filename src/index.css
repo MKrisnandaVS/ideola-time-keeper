@@ -11,58 +11,59 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 222 47% 11%;
-    --foreground: 60 9% 97%;
+    /* Light Mode Colors - Improved for better contrast */
+    --background: 210 20% 98%; /* Light gray background */
+    --foreground: 222 47% 11%; /* Dark blue-gray text */
 
-    --card: 217 33% 17%;
-    --card-foreground: 60 9% 97%;
+    --card: 210 20% 96%; /* Light gray card background */
+    --card-foreground: 222 47% 11%; /* Dark text on cards */
 
-    --popover: 217 33% 17%;
-    --popover-foreground: 60 9% 97%;
+    --popover: 210 20% 96%; /* Light gray popover */
+    --popover-foreground: 222 47% 11%; /* Dark text on popovers */
 
-    --primary: 60 100% 60%;
-    --primary-foreground: 222 47% 11%;
+    --primary: 60 100% 60%; /* Original yellow color */
+    --primary-foreground: 222 47% 11%; /* Dark text on primary for better contrast */
 
-    --secondary: 215 20% 65%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 210 20% 95%; /* Light blue-gray */
+    --secondary-foreground: 222 47% 11%; /* Dark text on secondary */
 
-    --muted: 217 33% 25%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 210 20% 97%; /* Very light blue-gray */
+    --muted-foreground: 215 20% 35%; /* Medium gray text */
 
-    --accent: 60 100% 60%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 60 100% 65%; /* Slightly lighter yellow */
+    --accent-foreground: 222 47% 11%; /* Dark text on accent */
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 60 9% 97%;
+    --destructive: 0 84% 60%; /* Red */
+    --destructive-foreground: 0 0% 100%; /* White text on red */
 
-    --border: 217 33% 25%;
-    --input: 217 33% 25%;
-    --ring: 60 100% 60%;
+    --border: 210 20% 85%; /* Medium gray border */
+    --input: 210 20% 85%; /* Medium gray input border */
+    --ring: 60 100% 60%; /* Same as primary for consistency */
 
     --radius: 0.75rem;
 
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 60 9% 97%;
-    --sidebar-primary: 60 100% 60%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 217 33% 25%;
-    --sidebar-accent-foreground: 60 9% 97%;
-    --sidebar-border: 217 33% 25%;
-    --sidebar-ring: 60 100% 60%;
+    --sidebar-background: 210 20% 98%; /* Light gray sidebar */
+    --sidebar-foreground: 222 47% 11%; /* Dark text in sidebar */
+    --sidebar-primary: 60 100% 60%; /* Original yellow */
+    --sidebar-primary-foreground: 222 47% 11%; /* Dark text on sidebar primary */
+    --sidebar-accent: 210 20% 95%; /* Light blue-gray */
+    --sidebar-accent-foreground: 222 47% 11%; /* Dark text on sidebar accent */
+    --sidebar-border: 210 20% 85%; /* Medium gray border */
+    --sidebar-ring: 60 100% 60%; /* Yellow ring */
 
-    --chart-1: 60 100% 60%;
-    --chart-2: 45 96% 64%;
-    --chart-3: 0 84% 60%;
-    --chart-4: 217 33% 50%;
-    --chart-5: 215 20% 65%;
+    --chart-1: 60 100% 60%; /* Original yellow */
+    --chart-2: 45 96% 50%; /* Deeper gold */
+    --chart-3: 0 84% 60%; /* Red */
+    --chart-4: 210 33% 65%; /* Medium blue-gray */
+    --chart-5: 215 20% 50%; /* Medium gray */
 
-    --sidebar: 217 33% 17%;
+    --sidebar: 0 0% 100%; /* White sidebar */
 
     --font-sans: 'Source Sans Pro', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
     --font-mono: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 
-    --shadow-glow: 0 0 20px hsl(60 100% 60% / 0.3);
-    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
+    --shadow-glow: 0 0 20px hsl(60 100% 60% / 0.3); /* Original yellow glow */
+    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.12); /* Slightly more visible shadow */
   }
 
   .dark {
@@ -75,7 +76,7 @@ All colors MUST be HSL.
     --popover: 217 33% 17%;
     --popover-foreground: 60 9% 97%;
 
-    --primary: 60 100% 60%;
+    --primary: 60 100% 60%; /* Keep original dark mode primary */
     --primary-foreground: 222 47% 11%;
 
     --secondary: 215 20% 65%;
@@ -124,4 +125,36 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Add subtle text shadow for better readability */
+  .font-bold.text-primary,
+  .font-semibold.text-primary {
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Ensure good contrast for important elements */
+  .bg-primary\/20 {
+    background-color: hsl(var(--primary) / 0.15); /* Slightly more opaque for better visibility */
+  }
+  
+  /* Text outline for yellow text in light mode to improve visibility */
+  .light .text-primary {
+    -webkit-text-stroke: 0.5px #000000; /* Thinner black outline for better visibility */
+    text-shadow: 
+      -0.5px -0.5px 0 #000000,  
+      0.5px -0.5px 0 #000000,
+      -0.5px 0.5px 0 #000000,
+      0.5px 0.5px 0 #000000;
+  }
+}
+
+/* Custom utility classes for better readability */
+.text-primary-readable {
+  color: hsl(60 100% 60%);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.bg-primary-subtle {
+  background-color: hsl(var(--primary) / 0.15);
+  border: 1px solid hsl(var(--primary) / 0.2);
 }

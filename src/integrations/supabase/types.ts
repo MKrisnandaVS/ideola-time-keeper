@@ -14,36 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
-      time_logs: {
+      time_tracker_logs: {
         Row: {
-          client_name: string
-          duration_minutes: number | null
-          end_time: string | null
           id: number
-          project_name: string
-          project_type: string
-          start_time: string
           user_name: string
+          client_name: string
+          project_type: string
+          project_name: string
+          start_time: string
+          end_time: string | null
+          duration_minutes: number | null
         }
         Insert: {
-          client_name: string
-          duration_minutes?: number | null
-          end_time?: string | null
-          id?: number
-          project_name: string
-          project_type: string
-          start_time?: string
+          id?: never
           user_name: string
+          client_name: string
+          project_type: string
+          project_name: string
+          start_time?: string
+          end_time?: string | null
+          duration_minutes?: number | null
         }
         Update: {
-          client_name?: string
-          duration_minutes?: number | null
-          end_time?: string | null
-          id?: number
-          project_name?: string
-          project_type?: string
-          start_time?: string
+          id?: never
           user_name?: string
+          client_name?: string
+          project_type?: string
+          project_name?: string
+          start_time?: string
+          end_time?: string | null
+          duration_minutes?: number | null
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          id: number
+          username: string
+          password_hash: string
+          role: 'admin' | 'client'
+          full_name: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: never
+          username: string
+          password_hash: string
+          role: 'admin' | 'client'
+          full_name: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: never
+          username?: string
+          password_hash?: string
+          role?: 'admin' | 'client'
+          full_name?: string
+          created_at?: string
+          updated_at?: string
         }
         Relationships: []
       }

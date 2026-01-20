@@ -1,73 +1,73 @@
-# Welcome to your Lovable project
+# IDEOLA Time Keeper
 
-## Project info
+Aplikasi time tracking internal untuk tim IDEOLA dengan dashboard admin dan client interface.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🚀 Quick Start
 
-## How can I edit this code?
+### Setup Database
+1. Buka Supabase Dashboard → SQL Editor
+2. Jalankan `DATABASE_SETUP.sql` (setup lengkap) ATAU
+3. Jalankan file-file berikut secara berurutan:
+   - `DATABASE_CORE.sql` → `DATABASE_SECURITY.sql` → `DATABASE_OPTIMIZATION.sql`
 
-There are several ways of editing your application.
+### Setup Aplikasi
+```bash
+# Install dependencies
+npm install
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Jalankan development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Login Default
+- **Admin**: username `admin`, password `admin123`
+- Ganti password setelah login pertama!
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📁 Struktur File Database
 
-**Use GitHub Codespaces**
+### File Utama:
+- `DATABASE_SETUP.sql` - Setup lengkap satu file (recommended)
+- `DATABASE_CORE.sql` - Schema dasar dan tabel
+- `DATABASE_SECURITY.sql` - Kebijakan keamanan
+- `DATABASE_OPTIMIZATION.sql` - Indexes dan optimasi
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Panduan:
+- `DATABASE_GUIDE.md` - Panduan lengkap setup dan troubleshooting
+- `DATABASE_SQL_README.md` - Penjelasan file SQL
 
-## What technologies are used for this project?
+## 🛠️ Tech Stack
+- **Frontend**: React + TypeScript + Vite
+- **UI**: Shadcn/ui + Tailwind CSS  
+- **Database**: Supabase (PostgreSQL)
+- **Auth**: Custom session-based
+- **Charts**: Recharts
 
-This project is built with:
+## 🔧 Fitur Utama
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Admin
+- Dashboard statistik real-time
+- Manajemen user (admin & client)
+- Konfigurasi client & project type
+- Monitoring session aktif
 
-## How can I deploy this project?
+### Client  
+- Interface time tracking sederhana
+- Start/stop timer
+- Pilihan client, project type, project name
+- Session tracking
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## ⚠️ Security Notes
+- ✅ Password di-hash dengan bcrypt
+- ✅ Role-based access control
+- ✅ Row Level Security (RLS) policies
+- ⚠️ Wajib deploy dengan HTTPS untuk production
+- ⚠️ Ganti password default segera setelah setup
 
-## Can I connect a custom domain to my Lovable project?
+## 📞 Support
+Untuk troubleshooting, lihat:
+1. `DATABASE_GUIDE.md` - Panduan lengkap
+2. Console browser untuk error messages
+3. Supabase Dashboard → Logs
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
+*Dibuat untuk kebutuhan internal tim IDEOLA*
