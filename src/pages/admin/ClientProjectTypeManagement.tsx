@@ -320,7 +320,9 @@ const ClientProjectTypeManagement = () => {
         </div>
       </header>
 
-      <div className="p-6 space-y-6">
+      <div className="p-6">
+        <div className="container mx-auto px-4 sm:px-18 lg:px-24">
+          <div className="space-y-6">
         {/* Clients Section */}
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between">
@@ -551,6 +553,8 @@ const ClientProjectTypeManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        </div>
+      </div>
     </div>
   );
 };

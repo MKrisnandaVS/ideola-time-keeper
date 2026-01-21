@@ -339,7 +339,9 @@ const AdminDashboard = () => {
         </div>
       </header>
 
-      <div className="flex-1 overflow-auto p-6 space-y-6">
+      <div className="flex-1 overflow-auto p-6">
+        <div className="container mx-auto px-4 sm:px-18 lg:px-24">
+          <div className="space-y-6">
         {/* 1. Active Users */}
         <Card className="bg-card border-border">
           <CardHeader>
@@ -519,6 +521,8 @@ const AdminDashboard = () => {
         <MonthlyClientCalendar 
           logs={unfilteredLogs}
         />
+          </div>
+        </div>
       </div>
     </div>
   );

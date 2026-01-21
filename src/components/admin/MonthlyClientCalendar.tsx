@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format, eachDayOfInterval, isSameDay, isSameMonth, startOfMonth, endOfMonth, addMonths, subMonths, parseISO, getDay } from "date-fns";
 import type { TimeLog } from "@/types";
+import ClientTimelineView from "./ClientTimelineView";
 
 interface MonthlyClientData {
   date: Date;
@@ -47,6 +48,7 @@ const HOVER_COLORS = [
 const MonthlyClientCalendar = ({ logs, initialMonth }: MonthlyClientCalendarProps) => {
   const [currentMonth, setCurrentMonth] = useState<Date>(initialMonth || new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
 
   // Get unique clients and assign colors
   const clientColors = useMemo(() => {
@@ -171,26 +173,45 @@ const MonthlyClientCalendar = ({ logs, initialMonth }: MonthlyClientCalendarProp
   // Navigation handlers
   const goToPreviousMonth = () => {
     setCurrentMonth(prev => subMonths(prev, 1));
-    setSelectedDate(null);
+    resetSelections();
   };
 
   const goToNextMonth = () => {
     setCurrentMonth(prev => addMonths(prev, 1));
-    setSelectedDate(null);
+    resetSelections();
   };
 
   const goToCurrentMonth = () => {
     setCurrentMonth(new Date());
-    setSelectedDate(null);
+    resetSelections();
   };
 
   // Handle date selection
   const handleDateClick = (date: Date) => {
     if (selectedDate && isSameDay(selectedDate, date)) {
       setSelectedDate(null); // Deselect if clicking the same date
+      setExpandedClients(new Set()); // Also collapse all expanded clients
     } else {
       setSelectedDate(date);
+      setExpandedClients(new Set()); // Reset client expansions when changing date
     }
+  };
+
+  // Handle client expansion/collapse
+  const toggleClientExpansion = (clientName: string) => {
+    const newExpandedClients = new Set(expandedClients);
+    if (newExpandedClients.has(clientName)) {
+      newExpandedClients.delete(clientName);
+    } else {
+      newExpandedClients.add(clientName);
+    }
+    setExpandedClients(newExpandedClients);
+  };
+
+  // Reset all selections
+  const resetSelections = () => {
+    setSelectedDate(null);
+    setExpandedClients(new Set());
   };
 
   return (
@@ -336,6 +357,85 @@ const MonthlyClientCalendar = ({ logs, initialMonth }: MonthlyClientCalendarProp
               </div>
             )}
           </div>
+
+          {/* Selected Date Detail */}
+          {selectedDate && (
+            <div className="mt-6 p-4 bg-muted/50 rounded-lg border">
+              <div className="flex justify-between items-start mb-3">
+                <h3 className="font-semibold text-lg">
+                  {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+                </h3>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setSelectedDate(null)}
+                  className="h-6 w-6 p-0"
+                >
+                  ×
+                </Button>
+              </div>
+              
+              {(() => {
+                const selectedDayData = monthlyData.find(d => isSameDay(d.date, selectedDate));
+                if (!selectedDayData || selectedDayData.clientDistribution.length === 0) {
+                  return <p className="text-muted-foreground">No time tracked on this date</p>;
+                }
+                
+                return (
+                  <div className="space-y-2">
+                    {selectedDayData.clientDistribution.map((client, idx) => {
+                      const clientColor = clientColors.get(client.clientName) || { bg: "bg-gray-200", text: "text-gray-800" };
+                      const isExpanded = expandedClients.has(client.clientName);
+                      
+                      return (
+                        <div key={idx}>
+                          <div 
+                            className={`flex items-center justify-between p-3 rounded-md cursor-pointer transition-colors hover:bg-muted ${
+                              isExpanded ? 'ring-2 ring-primary' : ''
+                            }`}
+                            onClick={() => toggleClientExpansion(client.clientName)}
+                          >
+                            <div className="flex items-center gap-3 flex-1">
+                              <Badge 
+                                className={`${clientColor.bg} ${clientColor.text} text-xs px-2 py-1`}
+                              >
+                                {client.percentage}%
+                              </Badge>
+                              <span className="font-medium">{client.clientName}</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className="text-muted-foreground">{formatTime(client.minutes)}</span>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="h-6 px-2"
+                              >
+                                {isExpanded ? '▼' : '▶'}
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          {/* Client Timeline View - appears below the client entry */}
+                          {isExpanded && (
+                            <div className="mt-3 ml-4 mr-2 border-l-2 border-border pl-4">
+                              <ClientTimelineView
+                                logs={logs}
+                                selectedDate={selectedDate!}
+                                selectedClient={client.clientName}
+                                onClose={() => toggleClientExpansion(client.clientName)}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+
         </div>
       </CardContent>
     </Card>

@@ -263,7 +263,8 @@ const UserManagement = () => {
       </header>
 
       <div className="p-6">
-        <Card className="bg-card border-border">
+        <div className="container mx-auto px-4 sm:px-12 lg:px-16">
+          <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg uppercase tracking-wider">
               All Users
@@ -433,6 +434,7 @@ const UserManagement = () => {
         </DialogContent>
       </Dialog>
     </div>
+  </div>
   );
 };
 

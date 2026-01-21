@@ -330,7 +330,9 @@ const TimeTracker = () => {
       
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-card border-border">
+        <div className="container mx-auto px-4 sm:px-12 lg:px-16 w-full">
+          <div className="flex justify-center">
+            <Card className="w-full max-w-md bg-card border-border">
           <CardContent className="p-6">
             {/* Logo/Title */}
             <div className="text-center mb-8">
@@ -457,8 +459,10 @@ const TimeTracker = () => {
             </div>
           )}
         </CardContent>
-      </Card>
-      <DailyTask logs={dailyLogs} username={user?.username} fullName={user?.full_name} />
+          </Card>
+          <DailyTask logs={dailyLogs} username={user?.username} fullName={user?.full_name} />
+        </div>
+      </div>
     </div>
   </div>
   );
