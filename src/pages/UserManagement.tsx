@@ -41,7 +41,7 @@ import {
 interface User {
   id: number;
   username: string;
-  role: "admin" | "client";
+  role: "admin" | "member";
   full_name: string;
   created_at: string;
 }
@@ -49,7 +49,7 @@ interface User {
 interface UserFormData {
   username: string;
   password: string;
-  role: "admin" | "client";
+  role: "admin" | "member";
   full_name: string;
 }
 
@@ -63,7 +63,7 @@ const UserManagement = () => {
   const [formData, setFormData] = useState<UserFormData>({
     username: "",
     password: "",
-    role: "client",
+    role: "member",
     full_name: "",
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -116,7 +116,7 @@ const UserManagement = () => {
     setFormData({
       username: "",
       password: "",
-      role: "client",
+      role: "member",
       full_name: "",
     });
   };
@@ -385,7 +385,7 @@ const UserManagement = () => {
               <Label htmlFor="role">Role</Label>
               <Select
                 value={formData.role}
-                onValueChange={(value: "admin" | "client") =>
+                onValueChange={(value: "admin" | "member") =>
                   setFormData({ ...formData, role: value })
                 }
                 disabled={isSaving}
@@ -394,7 +394,7 @@ const UserManagement = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="client">Client</SelectItem>
+                  <SelectItem value="member">Member</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>

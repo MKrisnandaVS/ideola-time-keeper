@@ -52,7 +52,7 @@ export type Database = {
           id: number
           username: string
           password_hash: string
-          role: 'admin' | 'client'
+          role: 'admin' | 'member'
           full_name: string
           created_at: string
           updated_at: string
@@ -61,7 +61,7 @@ export type Database = {
           id?: never
           username: string
           password_hash: string
-          role: 'admin' | 'client'
+          role: 'admin' | 'member'
           full_name: string
           created_at?: string
           updated_at?: string

@@ -175,6 +175,12 @@ const ClientProjectTypeManagement = () => {
       toast.error("Client name is required");
       return;
     }
+    
+    // Validate that the name contains only uppercase letters, numbers, spaces, and common punctuation
+    if (clientFormData.name !== clientFormData.name.toUpperCase()) {
+      toast.error("Client name must be in uppercase");
+      return;
+    }
 
     try {
       if (editingClient) {
@@ -203,6 +209,12 @@ const ClientProjectTypeManagement = () => {
   const handleSaveProjectType = async () => {
     if (!projectTypeFormData.name.trim()) {
       toast.error("Project type name is required");
+      return;
+    }
+    
+    // Validate that the name contains only uppercase letters, numbers, spaces, and common punctuation
+    if (projectTypeFormData.name !== projectTypeFormData.name.toUpperCase()) {
+      toast.error("Project type name must be in uppercase");
       return;
     }
 
@@ -461,7 +473,7 @@ const ClientProjectTypeManagement = () => {
                 id="client-name"
                 value={clientFormData.name}
                 onChange={(e) =>
-                  setClientFormData({ ...clientFormData, name: e.target.value })
+                  setClientFormData({ ...clientFormData, name: e.target.value.toUpperCase() })
                 }
                 placeholder="Enter client name"
               />
@@ -508,7 +520,7 @@ const ClientProjectTypeManagement = () => {
                 id="project-type-name"
                 value={projectTypeFormData.name}
                 onChange={(e) =>
-                  setProjectTypeFormData({ ...projectTypeFormData, name: e.target.value })
+                  setProjectTypeFormData({ ...projectTypeFormData, name: e.target.value.toUpperCase() })
                 }
                 placeholder="Enter project type name"
               />

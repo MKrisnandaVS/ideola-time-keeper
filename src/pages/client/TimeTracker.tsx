@@ -162,6 +162,57 @@ const TimeTracker = () => {
     }
   }, [isTracking, fetchTodaysTasks]);
 
+  // Handle browser close/unload to stop tracking automatically
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (isTracking && activeSession) {
+        try {
+          // Get Supabase configuration from environment
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+          
+          if (supabaseUrl && supabaseAnonKey) {
+            // Send a request directly to Supabase REST API using fetch
+            const endTime = new Date().toISOString();
+            
+            fetch(`${supabaseUrl}/rest/v1/time_tracker_logs?id=eq.${activeSession.id}`, {
+              method: 'PATCH',
+              headers: {
+                'apikey': supabaseAnonKey,
+                'Authorization': `Bearer ${supabaseAnonKey}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+              },
+              body: JSON.stringify({
+                end_time: endTime,
+                duration_minutes: (new Date(endTime).getTime() - new Date(activeSession.start_time).getTime()) / 60000
+              }),
+              // The keepalive option allows the request to outlive the page
+              keepalive: true,
+            }).catch(error => {
+              // Silently handle errors since page is unloading
+              console.error("Error in beforeunload request to Supabase:", error);
+            });
+          }
+          
+          // Update local state to reflect stopped tracking
+          setIsTracking(false);
+          setActiveSession(null);
+          setElapsedSeconds(0);
+          setStartTimeRef(null);
+        } catch (error) {
+          console.error("Error preparing to stop tracking on browser close:", error);
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isTracking, activeSession]);
+
 
 
   // Timer interval - calculate actual elapsed time from start_time

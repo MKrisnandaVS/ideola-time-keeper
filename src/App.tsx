@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { isAuthenticated, isAdmin, isClient } from "@/services/auth.service";
+import { isAuthenticated, isAdmin, isMember } from "@/services/auth.service";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import ErrorBoundary from "@/components/shared/ErrorBoundary";
 import Login from "./pages/auth/Login";
@@ -26,7 +26,7 @@ const App = () => {
     if (isAdmin()) {
       return <Navigate to="/admin/dashboard" replace />;
     }
-    if (isClient()) {
+    if (isMember()) {
       return <Navigate to="/tracker" replace />;
     }
     return <Navigate to="/login" replace />;
@@ -51,7 +51,7 @@ const App = () => {
                 <Route
                   path="/tracker"
                   element={
-                    <ProtectedRoute requireRole="client">
+                    <ProtectedRoute requireRole="member">
                       <TimeTracker />
                     </ProtectedRoute>
                   }

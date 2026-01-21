@@ -123,10 +123,10 @@ export const isAdmin = (): boolean => {
 };
 
 /**
- * Check if current user is client
+ * Check if current user is member
  * Also checks session validity
  */
-export const isClient = (): boolean => {
+export const isMember = (): boolean => {
   const user = getCurrentUser();
-  return user?.role === "client";
+  return user?.role === "member";
 };

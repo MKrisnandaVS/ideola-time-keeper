@@ -6,7 +6,7 @@
 
 ## 🛡️ Keamanan yang Sudah Ada:
 - ✅ Password hashing dengan bcrypt (salt rounds: 10)
-- ✅ Role-based access control (admin/client)
+- ✅ Role-based access control (admin/member)
 - ✅ Input validation dan protected routes
 - ✅ Session management dengan localStorage
 - ✅ Row Level Security (RLS) policies

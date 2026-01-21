@@ -1,7 +1,7 @@
 export interface User {
   id: number;
   username: string;
-  role: "admin" | "client";
+  role: "admin" | "member";
   full_name: string;
   created_at: string;
 }
@@ -14,8 +14,8 @@ export interface AuthSession {
 export interface UserFormData {
   username: string;
   password: string;
-  role: "admin" | "client";
+  role: "admin" | "member";
   full_name: string;
 }
 
-export type UserRole = "admin" | "client";
+export type UserRole = "admin" | "member";

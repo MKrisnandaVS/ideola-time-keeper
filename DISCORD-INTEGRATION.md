@@ -15,7 +15,7 @@ Dokumentasi ini untuk developer yang akan mengintegrasikan Discord bot untuk not
 - id (BIGINT) - Primary Key
 - username (TEXT) - Unique
 - password_hash (TEXT)
-- role (TEXT) - 'admin' | 'client'
+- role (TEXT) - 'admin' | 'member'
 - full_name (TEXT)
 - created_at (TIMESTAMPTZ)
 - updated_at (TIMESTAMPTZ)
@@ -262,7 +262,7 @@ interface User {
   id: number;
   username: string;          // ← Untuk mention
   full_name: string;         // ← Untuk display
-  role: "admin" | "client";
+  role: "admin" | "member";
   created_at: string;
 }
 ```

@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS public.users (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('admin', 'client')),
+    role TEXT NOT NULL CHECK (role IN ('admin', 'member')),
     full_name TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()

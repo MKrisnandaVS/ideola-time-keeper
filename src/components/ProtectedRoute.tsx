@@ -3,7 +3,7 @@ import { isAuthenticated, getCurrentUser } from "@/lib/auth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requireRole?: "admin" | "client";
+  requireRole?: "admin" | "member";
 }
 
 const ProtectedRoute = ({ children, requireRole }: ProtectedRouteProps) => {

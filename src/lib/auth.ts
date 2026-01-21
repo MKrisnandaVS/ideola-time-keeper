@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 export interface User {
   id: number;
   username: string;
-  role: 'admin' | 'client';
+  role: 'admin' | 'member';
   full_name: string;
   created_at: string;
 }
@@ -60,7 +60,7 @@ export const isAdmin = (): boolean => {
   return user?.role === 'admin';
 };
 
-export const isClient = (): boolean => {
+export const isMember = (): boolean => {
   const user = getCurrentUser();
-  return user?.role === 'client';
+  return user?.role === 'member';
 };
