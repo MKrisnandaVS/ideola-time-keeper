@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { clearSession, getCurrentUser, hashPassword } from "@/lib/auth";
+import { getCurrentUser, hashPassword } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,14 +29,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import {
-  UserPlus,
-  Edit,
-  Trash2,
-  LogOut,
-  LayoutDashboard,
-  ArrowLeft,
-} from "lucide-react";
+import { UserPlus, Edit, Trash2 } from "lucide-react";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 interface User {
   id: number;
@@ -206,12 +200,6 @@ const UserManagement = () => {
     }
   };
 
-  const handleLogout = () => {
-    clearSession();
-    toast.success("Logged out successfully");
-    navigate("/login");
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
@@ -222,62 +210,33 @@ const UserManagement = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Loading users...</div>
-      </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-foreground">Loading users...</div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-primary tracking-wider">
-              User Management
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Manage system users and permissions
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              onClick={() => navigate("/admin/dashboard")}
-              className="uppercase"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Dashboard
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleLogout}
-              className="uppercase"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="p-6">
-        <div className="container mx-auto px-4 sm:px-12 lg:px-16">
-          <Card className="bg-card border-border">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg uppercase tracking-wider">
-              All Users
-            </CardTitle>
-            <Button
-              onClick={() => handleOpenDialog()}
-              className="uppercase bg-primary hover:bg-primary/90"
-            >
-              <UserPlus className="w-4 h-4 mr-2" />
-              Add User
-            </Button>
-          </CardHeader>
-          <CardContent>
+    <AdminLayout>
+      <Card className="bg-card border-border rounded-xl hover:shadow-lg transition-shadow duration-200">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-lg uppercase tracking-wider">
+          User Management
+          <span className="block text-xs normal-case text-muted-foreground font-normal mt-1">
+            Manage system users and permissions
+          </span>
+        </CardTitle>
+        <Button
+          onClick={() => handleOpenDialog()}
+          className="uppercase bg-primary hover:bg-primary/90 transition-all duration-200 hover:shadow-md"
+        >
+          <UserPlus className="w-4 h-4 mr-2" />
+          Add User
+        </Button>
+      </CardHeader>
+      <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -344,8 +303,7 @@ const UserManagement = () => {
               </TableBody>
             </Table>
           </CardContent>
-        </Card>
-      </div>
+      </Card>
 
       {/* Add/Edit User Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -433,9 +391,8 @@ const UserManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  </div>
-  );
-};
+    </AdminLayout>
+    );
+  };
 
 export default UserManagement;

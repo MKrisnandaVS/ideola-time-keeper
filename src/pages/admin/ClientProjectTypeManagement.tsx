@@ -21,13 +21,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import {
-  Plus,
-  Edit,
-  Trash2,
-  LogOut,
-  ArrowLeft,
-} from "lucide-react";
+import { Plus, Edit, Trash2 } from "lucide-react";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { clearSession, isAdmin } from "@/services/auth.service";
 import {
   Client,
@@ -272,66 +267,31 @@ const ClientProjectTypeManagement = () => {
     }
   };
 
-  const handleLogout = () => {
-    clearSession();
-    toast.success("Logged out successfully");
-    navigate("/login");
-  };
-
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Loading...</div>
-      </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-foreground">Loading...</div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-primary tracking-wider">
-              Client & Project Type Management
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Manage clients and project types for time tracking
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              onClick={() => navigate("/admin/dashboard")}
-              className="uppercase"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Dashboard
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleLogout}
-              className="uppercase"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="p-6">
-        <div className="container mx-auto px-4 sm:px-18 lg:px-24">
-          <div className="space-y-6">
-        {/* Clients Section */}
-        <Card className="bg-card border-border">
+    <AdminLayout>
+      <div className="space-y-6">
+        {/* Clients Card */}
+        <Card className="bg-card border-border rounded-xl hover:shadow-lg transition-shadow duration-200">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg uppercase tracking-wider">
               Clients
+              <span className="block text-xs normal-case text-muted-foreground font-normal mt-1">
+                Manage client organizations
+              </span>
             </CardTitle>
             <Button
               onClick={() => handleOpenClientDialog()}
-              className="uppercase bg-primary hover:bg-primary/90"
+              className="uppercase bg-primary hover:bg-primary/90 transition-all duration-200 hover:shadow-md"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Client
@@ -358,7 +318,7 @@ const ClientProjectTypeManagement = () => {
                   </TableRow>
                 ) : (
                   clients.map((client) => (
-                    <TableRow key={client.id}>
+                    <TableRow key={client.id} className="hover:bg-muted/50 transition-colors">
                       <TableCell className="font-medium font-mono">
                         {client.name}
                       </TableCell>
@@ -371,6 +331,7 @@ const ClientProjectTypeManagement = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleOpenClientDialog(client)}
+                            className="hover:bg-muted"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -391,15 +352,18 @@ const ClientProjectTypeManagement = () => {
           </CardContent>
         </Card>
 
-        {/* Project Types Section */}
-        <Card className="bg-card border-border">
+        {/* Project Types Card */}
+        <Card className="bg-card border-border rounded-xl hover:shadow-lg transition-shadow duration-200">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg uppercase tracking-wider">
               Project Types
+              <span className="block text-xs normal-case text-muted-foreground font-normal mt-1">
+                Manage project type categories
+              </span>
             </CardTitle>
             <Button
               onClick={() => handleOpenProjectTypeDialog()}
-              className="uppercase bg-primary hover:bg-primary/90"
+              className="uppercase bg-primary hover:bg-primary/90 transition-all duration-200 hover:shadow-md"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Project Type
@@ -426,7 +390,7 @@ const ClientProjectTypeManagement = () => {
                   </TableRow>
                 ) : (
                   projectTypes.map((projectType) => (
-                    <TableRow key={projectType.id}>
+                    <TableRow key={projectType.id} className="hover:bg-muted/50 transition-colors">
                       <TableCell className="font-medium font-mono">
                         {projectType.name}
                       </TableCell>
@@ -439,6 +403,7 @@ const ClientProjectTypeManagement = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleOpenProjectTypeDialog(projectType)}
+                            className="hover:bg-muted"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -458,104 +423,102 @@ const ClientProjectTypeManagement = () => {
             </Table>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Client Dialog */}
-      <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="uppercase tracking-wider">
-              {editingClient ? "Edit Client" : "Add New Client"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="client-name">Client Name</Label>
-              <Input
-                id="client-name"
-                value={clientFormData.name}
-                onChange={(e) =>
-                  setClientFormData({ ...clientFormData, name: e.target.value.toUpperCase() })
-                }
-                placeholder="Enter client name"
-              />
+        {/* Client Dialog */}
+        <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="uppercase tracking-wider">
+                {editingClient ? "Edit Client" : "Add New Client"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="client-name">Client Name</Label>
+                <Input
+                  id="client-name"
+                  value={clientFormData.name}
+                  onChange={(e) =>
+                    setClientFormData({ ...clientFormData, name: e.target.value.toUpperCase() })
+                  }
+                  placeholder="Enter client name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="client-description">Description</Label>
+                <Textarea
+                  id="client-description"
+                  value={clientFormData.description}
+                  onChange={(e) =>
+                    setClientFormData({ ...clientFormData, description: e.target.value })
+                  }
+                  placeholder="Enter description (optional)"
+                  rows={3}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="client-description">Description</Label>
-              <Textarea
-                id="client-description"
-                value={clientFormData.description}
-                onChange={(e) =>
-                  setClientFormData({ ...clientFormData, description: e.target.value })
-                }
-                placeholder="Enter description (optional)"
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={handleCloseClientDialog}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleSaveClient}>
-              {editingClient ? "Update" : "Create"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={handleCloseClientDialog}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleSaveClient}>
+                {editingClient ? "Update" : "Create"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      {/* Project Type Dialog */}
-      <Dialog open={isProjectTypeDialogOpen} onOpenChange={setIsProjectTypeDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="uppercase tracking-wider">
-              {editingProjectType ? "Edit Project Type" : "Add New Project Type"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="project-type-name">Project Type Name</Label>
-              <Input
-                id="project-type-name"
-                value={projectTypeFormData.name}
-                onChange={(e) =>
-                  setProjectTypeFormData({ ...projectTypeFormData, name: e.target.value.toUpperCase() })
-                }
-                placeholder="Enter project type name"
-              />
+        {/* Project Type Dialog */}
+        <Dialog open={isProjectTypeDialogOpen} onOpenChange={setIsProjectTypeDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="uppercase tracking-wider">
+                {editingProjectType ? "Edit Project Type" : "Add New Project Type"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="project-type-name">Project Type Name</Label>
+                <Input
+                  id="project-type-name"
+                  value={projectTypeFormData.name}
+                  onChange={(e) =>
+                    setProjectTypeFormData({ ...projectTypeFormData, name: e.target.value.toUpperCase() })
+                  }
+                  placeholder="Enter project type name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="project-type-description">Description</Label>
+                <Textarea
+                  id="project-type-description"
+                  value={projectTypeFormData.description}
+                  onChange={(e) =>
+                    setProjectTypeFormData({ ...projectTypeFormData, description: e.target.value })
+                  }
+                  placeholder="Enter description (optional)"
+                  rows={3}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="project-type-description">Description</Label>
-              <Textarea
-                id="project-type-description"
-                value={projectTypeFormData.description}
-                onChange={(e) =>
-                  setProjectTypeFormData({ ...projectTypeFormData, description: e.target.value })
-                }
-                placeholder="Enter description (optional)"
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={handleCloseProjectTypeDialog}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleSaveProjectType}>
-              {editingProjectType ? "Update" : "Create"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-        </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={handleCloseProjectTypeDialog}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleSaveProjectType}>
+                {editingProjectType ? "Update" : "Create"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

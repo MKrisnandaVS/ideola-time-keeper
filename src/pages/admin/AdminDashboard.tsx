@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { clearSession, getCurrentUser } from "@/services/auth.service";
+import { getCurrentUser } from "@/services/auth.service";
 import {
   fetchActiveSessions,
   fetchCompletedLogs,
@@ -9,7 +8,6 @@ import {
 import { fetchUserFullNames } from "@/services/user.service";
 import type { TimeLog, ActiveUser, TimeFilter, TimeUnit } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   BarChart,
@@ -24,17 +22,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import {
-  Activity,
-  LogOut,
-  UserCog,
-  Clock,
-  Settings,
-  Menu,
-  X,
-  LayoutDashboard,
-  Calendar,
-} from "lucide-react";
+import { Activity, Clock } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -42,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import ThemeToggle from "@/components/shared/ThemeToggle";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import MonthlyClientCalendar from "@/components/admin/MonthlyClientCalendar";
 
 // Color palette that works for both light and dark modes
@@ -58,7 +46,6 @@ const COLORS = [
 ];
 
 const AdminDashboard = () => {
-  const navigate = useNavigate();
   const user = getCurrentUser();
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("7days");
   const [timeUnit, setTimeUnit] = useState<TimeUnit>("hours");
@@ -74,7 +61,6 @@ const AdminDashboard = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState<number>(Date.now()); // For real-time elapsed time updates
-  const [sidebarOpen, setSidebarOpen] = useState(true); // Sidebar toggle state
 
   useEffect(() => {
     fetchDashboardData();
@@ -301,12 +287,6 @@ const AdminDashboard = () => {
       .sort((a, b) => b.value - a.value);
   }, [allLogs, timeUnit, selectedClientForProjectType]);
 
-  const handleLogout = () => {
-    clearSession();
-    toast.success("Logged out successfully");
-    navigate("/login");
-  };
-
   const getFilterLabel = (filter: TimeFilter) => {
     switch (filter) {
       case "today": return "Today";
@@ -319,82 +299,33 @@ const AdminDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Loading dashboard...</div>
-      </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-foreground">Loading dashboard...</div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
-      <aside
-        className={`
-          fixed inset-y-0 left-0 z-50
-          bg-card border-r border-border
-          transition-all duration-300 ease-in-out
-          ${sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full lg:w-20 lg:translate-x-0'}
-          overflow-hidden flex flex-col
-        `}
-      >
-        {/* Sidebar Header */}
-        <div className="p-4 border-b border-border flex items-center justify-between">
-          {sidebarOpen && (
-            <div>
-              <h1 className="text-lg font-bold text-primary tracking-wider">IDEOLA</h1>
-              <p className="text-xs text-muted-foreground">Admin Panel</p>
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="flex-shrink-0"
-          >
-            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-          {/* Dashboard Link (Active) */}
-          <Button
-            variant="ghost"
-            className="w-full justify-start bg-primary/10 text-primary hover:bg-primary/20"
-            onClick={() => navigate("/admin/dashboard")}
-          >
-            <LayoutDashboard className="h-5 w-5 flex-shrink-0" />
-            {sidebarOpen && <span className="ml-3">Dashboard</span>}
-          </Button>
-
-          {/* Users Link */}
-          <Button
-            variant="ghost"
-            className="w-full justify-start hover:bg-muted"
-            onClick={() => navigate("/admin/users")}
-          >
-            <UserCog className="h-5 w-5 flex-shrink-0" />
-            {sidebarOpen && <span className="ml-3">Manage Users</span>}
-          </Button>
-
-          {/* Config Link */}
-          <Button
-            variant="ghost"
-            className="w-full justify-start hover:bg-muted"
-            onClick={() => navigate("/admin/config")}
-          >
-            <Settings className="h-5 w-5 flex-shrink-0" />
-            {sidebarOpen && <span className="ml-3">Config</span>}
-          </Button>
-
-          {/* Filters Section */}
-          {sidebarOpen && (
-            <div className="pt-4 mt-4 border-t border-border space-y-3">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider px-3">
-                Filters
-              </p>
-
-              {/* Time Filter */}
+    <AdminLayout>
+      {/* Filters Section */}
+      <Card className="mb-6 bg-card border-border rounded-xl">
+        <CardHeader>
+          <CardTitle className="text-lg uppercase tracking-wider">
+            Dashboard Filters
+            <span className="block text-xs normal-case text-muted-foreground font-normal mt-1">
+              Filter data by time period and unit
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4">
+            {/* Time Filter */}
+            <div className="flex-1 min-w-[200px]">
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">
+                Time Period
+              </label>
               <Select value={timeFilter} onValueChange={(v) => setTimeFilter(v as TimeFilter)}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -407,8 +338,13 @@ const AdminDashboard = () => {
                   <SelectItem value="365days">Last Year</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
 
-              {/* Time Unit Filter */}
+            {/* Time Unit Filter */}
+            <div className="flex-1 min-w-[200px]">
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-2 block">
+                Display Unit
+              </label>
               <Select value={timeUnit} onValueChange={(v) => setTimeUnit(v as TimeUnit)}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -419,76 +355,24 @@ const AdminDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-          )}
-        </nav>
-
-        {/* Sidebar Footer - User info & actions */}
-        <div className="p-4 border-t border-border space-y-3">
-          {/* User Info */}
-          {sidebarOpen && (
-            <div className="text-center">
-              <p className="text-sm font-medium text-foreground">{user?.full_name}</p>
-              <p className="text-xs text-muted-foreground">@{user?.username}</p>
-            </div>
-          )}
-
-          {/* Theme Toggle */}
-          <div className={sidebarOpen ? "flex justify-center" : ""}>
-            <ThemeToggle />
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Logout Button */}
-          <Button
-            variant="destructive"
-            onClick={handleLogout}
-            className="w-full"
-          >
-            <LogOut className="h-4 w-4 flex-shrink-0" />
-            {sidebarOpen && <span className="ml-2">Logout</span>}
-          </Button>
-        </div>
-      </aside>
-
-      {/* Sidebar Overlay for Mobile */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        {/* Mobile Header */}
-        <header className="lg:hidden sticky top-0 z-30 bg-card border-b border-border px-4 py-3 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-lg font-bold text-primary">IDEOLA Admin</h1>
-          </div>
-          <div className="w-9"></div>
-        </header>
-
-        <div className="p-6">
-          <div className="container mx-auto space-y-6">
-            {/* 1. Active Users */}
-            <Card className="bg-card border-border rounded-xl">
-              <CardHeader>
-                <CardTitle className="text-lg uppercase tracking-wider flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-primary" />
-                  Active Users ({activeUsers.length})
-                  <span className="text-xs normal-case text-muted-foreground font-normal">
-                    - Users currently tracking time
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>{renderActiveUsers()}</CardContent>
-            </Card>
+      <div className="space-y-6">
+        {/* 1. Active Users */}
+        <Card className="bg-card border-border rounded-xl hover:shadow-lg transition-shadow duration-200">
+          <CardHeader>
+            <CardTitle className="text-lg uppercase tracking-wider flex items-center gap-2">
+              <Activity className="w-5 h-5 text-primary" />
+              Active Users ({activeUsers.length})
+              <span className="text-xs normal-case text-muted-foreground font-normal">
+                - Users currently tracking time
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>{renderActiveUsers()}</CardContent>
+        </Card>
 
         {/* 2. Time per Client & Time per User */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -698,16 +582,14 @@ const AdminDashboard = () => {
             )}
           </CardContent>
         </Card>
-        
-            {/* 5. Monthly Client Calendar */}
-            <MonthlyClientCalendar
-              logs={unfilteredLogs}
-            />
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-};
+
+        {/* 5. Monthly Client Calendar */}
+        <MonthlyClientCalendar
+          logs={unfilteredLogs}
+        />
+      </div>
+      </AdminLayout>
+    );
+  };
 
 export default AdminDashboard;
