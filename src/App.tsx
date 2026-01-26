@@ -75,7 +75,7 @@ const App = () => {
                   }
                 />
                 <Route
-                  path="/admin/config"
+                  path="/admin/settings"
                   element={
                     <ProtectedRoute requireRole="admin">
                       <ClientProjectTypeManagement />

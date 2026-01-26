@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/shared/ThemeToggle";
@@ -17,11 +17,23 @@ interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
+const SIDEBAR_STATE_KEY = 'admin_sidebar_open';
+
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = getCurrentUser();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Initialize sidebar state from localStorage, default to true
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const stored = localStorage.getItem(SIDEBAR_STATE_KEY);
+    return stored !== null ? stored === 'true' : true;
+  });
+
+  // Save sidebar state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_STATE_KEY, String(sidebarOpen));
+  }, [sidebarOpen]);
 
   const handleLogout = () => {
     clearSession();
@@ -32,10 +44,11 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navItems = [
     { path: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { path: "/admin/users", icon: UserCog, label: "Manage Users" },
-    { path: "/admin/config", icon: Settings, label: "Config" },
+    { path: "/admin/settings", icon: Settings, label: "Settings" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
+  const isSettingsPage = location.pathname === "/admin/settings";
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -107,19 +120,21 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
             <ThemeToggle />
           </div>
 
-          {/* Logout Button */}
-          <Button
-            variant="destructive"
-            onClick={handleLogout}
-            className="w-full transition-all duration-200 hover:shadow-lg"
-          >
-            <LogOut className="h-4 w-4 flex-shrink-0" />
-            {sidebarOpen && (
-              <span className="ml-2">
-                Logout
-              </span>
-            )}
-          </Button>
+          {/* Logout Button - Only show on Settings page */}
+          {isSettingsPage && (
+            <Button
+              variant="destructive"
+              onClick={handleLogout}
+              className="w-full transition-all duration-200 hover:shadow-lg"
+            >
+              <LogOut className="h-4 w-4 flex-shrink-0" />
+              {sidebarOpen && (
+                <span className="ml-2">
+                  Logout
+                </span>
+              )}
+            </Button>
+          )}
         </div>
       </aside>
 

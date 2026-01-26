@@ -42,7 +42,10 @@ const DailyTask = ({ logs, username, fullName }: DailyTaskProps) => {
   const formatDateTime = (dateString: string) => {
     if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    // 24-hour format: HH:mm
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
   };
 
   const formatDuration = (minutes: number) => {
@@ -78,21 +81,26 @@ const DailyTask = ({ logs, username, fullName }: DailyTaskProps) => {
 
   const copyAllTasksInfo = () => {
     if (todayLogs.length === 0) return;
-    
+
     const userFullName = fullName || username || 'User';
     const currentDate = new Date();
     const formattedDate = formatDate(currentDate.toISOString());
-    
+
     const header = `${userFullName}\n${formattedDate}`;
-    
-    const tasksInfo = todayLogs.map(log => 
+
+    // Sort logs by start_time (earliest first)
+    const sortedLogs = [...todayLogs].sort((a, b) =>
+      new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+    );
+
+    const tasksInfo = sortedLogs.map(log =>
       `${formatDateTime(log.start_time)} - ${formatDateTime(log.end_time || '')} ${formatDurationWithSeconds(log.duration_minutes || 0)} : (${log.client_name}) ${log.project_name}`
     ).join('\n');
-    
+
     const allTasksInfo = `${header}\n${tasksInfo}`;
-    
+
     navigator.clipboard.writeText(allTasksInfo).then(() => {
-      toast.success(`Copied ${todayLogs.length} task(s) information to clipboard!`);
+      toast.success(`Copied ${sortedLogs.length} task(s) information to clipboard!`);
     }).catch(err => {
       console.error('Failed to copy: ', err);
       toast.error("Failed to copy task information");
