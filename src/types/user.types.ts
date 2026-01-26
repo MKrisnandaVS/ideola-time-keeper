@@ -1,14 +1,18 @@
 export interface User {
   id: number;
-  username: string;
+  username: string; // This will be the email from Google
   role: "admin" | "member";
   full_name: string;
   created_at: string;
+  email?: string; // Google email
+  avatar_url?: string; // Google avatar URL
+  google_id?: string; // Google ID
 }
 
 export interface AuthSession {
   user: User;
   token: string;
+  expiresAt?: number;
 }
 
 export interface UserFormData {

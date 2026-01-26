@@ -7,6 +7,7 @@ import { isAuthenticated, isAdmin, isMember } from "@/services/auth.service";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import ErrorBoundary from "@/components/shared/ErrorBoundary";
 import Login from "./pages/auth/Login";
+import AuthCallback from "./pages/auth/AuthCallback";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserManagement from "./pages/UserManagement";
 import ClientProjectTypeManagement from "./pages/admin/ClientProjectTypeManagement";
@@ -43,7 +44,10 @@ const App = () => {
               <Routes>
                 {/* Public Routes */}
                 <Route path="/login" element={<Login />} />
-                
+
+                {/* Auth Callback Route */}
+                <Route path="/auth/callback" element={<AuthCallback />} />
+
                 {/* Root redirect */}
                 <Route path="/" element={<RootRedirect />} />
 
