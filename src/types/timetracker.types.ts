@@ -14,7 +14,7 @@ export interface ActiveUser {
   full_name: string;
   client_name: string;
   project_name: string;
-  elapsed_minutes: number;
+  start_time: string;
 }
 
 export interface ActiveSession {

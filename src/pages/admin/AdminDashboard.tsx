@@ -20,6 +20,9 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import {
   Activity,
@@ -38,6 +41,18 @@ import {
 import ThemeToggle from "@/components/shared/ThemeToggle";
 import MonthlyClientCalendar from "@/components/admin/MonthlyClientCalendar";
 
+// Color palette that works for both light and dark modes
+const COLORS = [
+  'hsl(var(--primary))',           // Primary color
+  'hsl(221, 83%, 53%)',             // Blue
+  'hsl(142, 71%, 45%)',             // Green
+  'hsl(38, 92%, 50%)',              // Orange
+  'hsl(346, 77%, 50%)',             // Pink
+  'hsl(262, 83%, 58%)',             // Purple
+  'hsl(173, 80%, 40%)',             // Teal
+  'hsl(28, 100%, 53%)',             // Amber
+];
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const user = getCurrentUser();
@@ -48,28 +63,52 @@ const AdminDashboard = () => {
   const [unfilteredLogs, setUnfilteredLogs] = useState<TimeLog[]>([]); // All logs for calendar
   const [allUsers, setAllUsers] = useState<string[]>([]);
   const [allClients, setAllClients] = useState<string[]>([]);
-  
+
   // Filters for charts
   const [selectedUserForProjectType, setSelectedUserForProjectType] = useState<string>("all");
   const [selectedClientForProjectType, setSelectedClientForProjectType] = useState<string>("all");
-  
+
   const [isLoading, setIsLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState<number>(Date.now()); // For real-time elapsed time updates
 
   useEffect(() => {
     fetchDashboardData();
   }, [timeFilter]);
 
+  // Update current time every second for real-time elapsed display
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     // Fetch active users immediately on mount
     fetchActiveUsers();
-    
-    // Then refresh every 30 seconds
-    const interval = setInterval(() => {
-      fetchActiveUsers();
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, []); // Empty dependency - runs once on mount and sets up interval
+
+    // Set up Supabase realtime subscription for time_tracker_logs
+    const channel = supabase
+      .channel('time_tracker_logs_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'time_tracker_logs'
+        },
+        () => {
+          // Refetch active users when there's any change
+          fetchActiveUsers();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []); // Empty dependency - runs once on mount and sets up subscription
 
   const fetchActiveUsers = async () => {
     try {
@@ -85,16 +124,12 @@ const AdminDashboard = () => {
       const userMap = await fetchUserFullNames();
 
       const active: ActiveUser[] = activeLogs.map(log => {
-        const startTime = new Date(log.start_time).getTime();
-        const now = Date.now();
-        const elapsedMinutes = Math.floor((now - startTime) / 60000);
-
         return {
           username: log.user_name,
           full_name: userMap.get(log.user_name) || log.user_name,
           client_name: log.client_name,
           project_name: log.project_name,
-          elapsed_minutes: elapsedMinutes,
+          start_time: log.start_time,
         };
       });
 
@@ -102,6 +137,14 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("Error fetching active users:", error);
     }
+  };
+
+  // Format seconds to HH:MM:SS
+  const formatTime = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   const fetchDashboardData = async () => {
@@ -143,27 +186,33 @@ const AdminDashboard = () => {
 
     return (
       <div className="space-y-3">
-        {activeUsers.map((activeUser, index) => (
-          <div
-            key={index}
-            className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border"
-          >
-            <div>
-              <p className="font-semibold text-foreground">
-                {activeUser.full_name} <span className="text-xs text-muted-foreground">(@{activeUser.username})</span>
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {activeUser.client_name} - {activeUser.project_name}
-              </p>
+        {activeUsers.map((activeUser, index) => {
+          // Calculate elapsed time in real-time
+          const startTime = new Date(activeUser.start_time).getTime();
+          const elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+
+          return (
+            <div
+              key={index}
+              className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-border hover:bg-muted/50 transition-colors"
+            >
+              <div>
+                <p className="font-semibold text-foreground">
+                  {activeUser.full_name} <span className="text-xs text-muted-foreground">(@{activeUser.username})</span>
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {activeUser.client_name} - {activeUser.project_name}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-lg">
+                <Clock className="w-4 h-4 text-primary animate-pulse" />
+                <span className="text-sm font-mono font-bold text-primary">
+                  {formatTime(elapsedSeconds)}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-primary animate-pulse" />
-              <span className="text-sm font-mono font-bold text-primary">
-                {activeUser.elapsed_minutes} min
-              </span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -274,7 +323,7 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Sticky Header */}
-      <header className="sticky top-0 z-50 bg-card border-b border-border px-6 py-4">
+      <header className="sticky top-0 z-50 bg-card border-b border-border px-6 py-4 rounded-b-xl">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-primary tracking-wider">
@@ -343,7 +392,7 @@ const AdminDashboard = () => {
         <div className="container mx-auto px-4 sm:px-18 lg:px-24">
           <div className="space-y-6">
         {/* 1. Active Users */}
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border rounded-xl">
           <CardHeader>
             <CardTitle className="text-lg uppercase tracking-wider flex items-center gap-2">
               <Activity className="w-5 h-5 text-primary" />
@@ -358,8 +407,8 @@ const AdminDashboard = () => {
 
         {/* 2. Time per Client & Time per User */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Total Time per Client */}
-          <Card className="bg-card border-border">
+          {/* Total Time per Client - Horizontal Bar Chart */}
+          <Card className="bg-card border-border rounded-xl">
             <CardHeader>
               <CardTitle className="text-lg uppercase tracking-wider">
                 Total Time per Client
@@ -375,16 +424,30 @@ const AdminDashboard = () => {
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={getTimePerClientData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
-                    <YAxis />
-                    <Tooltip />
+                  <BarChart data={getTimePerClientData} layout="horizontal">
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" className="stroke-muted" />
+                    <XAxis
+                      dataKey="name"
+                      angle={-45}
+                      textAnchor="end"
+                      height={100}
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                    />
+                    <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        color: 'hsl(var(--foreground))'
+                      }}
+                    />
                     <Legend />
-                    <Bar 
-                      dataKey="value" 
-                      fill="#8884d8" 
-                      name={timeUnit === "hours" ? "Hours" : "Minutes"} 
+                    <Bar
+                      dataKey="value"
+                      fill="hsl(var(--primary))"
+                      name={timeUnit === "hours" ? "Hours" : "Minutes"}
+                      radius={[8, 8, 0, 0]}
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -392,13 +455,13 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Total Time per User */}
-          <Card className="bg-card border-border">
+          {/* Total Time per User - Pie Chart */}
+          <Card className="bg-card border-border rounded-xl">
             <CardHeader>
               <CardTitle className="text-lg uppercase tracking-wider">
                 Total Time per User
                 <span className="block text-xs normal-case text-muted-foreground font-normal mt-1">
-                  Total time logged by each user in {getFilterLabel(timeFilter).toLowerCase()}
+                  Time distribution by user in {getFilterLabel(timeFilter).toLowerCase()}
                 </span>
               </CardTitle>
             </CardHeader>
@@ -409,26 +472,39 @@ const AdminDashboard = () => {
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={getTimePerUserData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar 
-                      dataKey="value" 
-                      fill="#82ca9d" 
-                      name={timeUnit === "hours" ? "Hours" : "Minutes"} 
+                  <PieChart>
+                    <Pie
+                      data={getTimePerUserData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, value }) => `${name}: ${value} ${timeUnit}`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {getTimePerUserData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        color: 'hsl(var(--foreground))'
+                      }}
                     />
-                  </BarChart>
+                    <Legend />
+                  </PieChart>
                 </ResponsiveContainer>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* 3. Project Type Time by User Filter */}
-        <Card className="bg-card border-border">
+        {/* 3. Project Type Time by User Filter - Bar Chart */}
+        <Card className="bg-card border-border rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg uppercase tracking-wider">
               Total Time per Project Type - Filter by User
@@ -456,15 +532,23 @@ const AdminDashboard = () => {
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={getProjectTypeByUserData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" className="stroke-muted" />
+                  <XAxis dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      color: 'hsl(var(--foreground))'
+                    }}
+                  />
                   <Legend />
-                  <Bar 
-                    dataKey="value" 
-                    fill="#ffc658" 
-                    name={timeUnit === "hours" ? "Hours" : "Minutes"} 
+                  <Bar
+                    dataKey="value"
+                    fill="hsl(221, 83%, 53%)"
+                    name={timeUnit === "hours" ? "Hours" : "Minutes"}
+                    radius={[8, 8, 0, 0]}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -472,8 +556,8 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* 4. Project Type Time by Client Filter */}
-        <Card className="bg-card border-border">
+        {/* 4. Project Type Time by Client Filter - Pie Chart */}
+        <Card className="bg-card border-border rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg uppercase tracking-wider">
               Total Time per Project Type - Filter by Client
@@ -500,18 +584,31 @@ const AdminDashboard = () => {
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={getProjectTypeByClientData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar 
-                    dataKey="value" 
-                    fill="#ff8042" 
-                    name={timeUnit === "hours" ? "Hours" : "Minutes"} 
+                <PieChart>
+                  <Pie
+                    data={getProjectTypeByClientData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {getProjectTypeByClientData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      color: 'hsl(var(--foreground))'
+                    }}
                   />
-                </BarChart>
+                  <Legend />
+                </PieChart>
               </ResponsiveContainer>
             )}
           </CardContent>
