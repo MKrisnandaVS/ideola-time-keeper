@@ -23,7 +23,7 @@ export const fetchAllClients = async (): Promise<Client[]> => {
   const { data, error } = await supabase
     .from("clients")
     .select("*")
-    .order("name", { ascending: true });
+    .order("created_at", { ascending: false }); // Descending order - newest first
 
   if (error) throw error;
   return data as Client[];
@@ -36,7 +36,7 @@ export const fetchAllProjectTypes = async (): Promise<ProjectType[]> => {
   const { data, error } = await supabase
     .from("project_types")
     .select("*")
-    .order("name", { ascending: true });
+    .order("created_at", { ascending: false }); // Descending order - newest first
 
   if (error) throw error;
   return data as ProjectType[];

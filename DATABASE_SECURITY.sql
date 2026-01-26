@@ -26,7 +26,7 @@ CREATE POLICY "Admins can manage users" ON public.users
     FOR ALL
     USING (EXISTS (
         SELECT 1 FROM public.users current_user
-        WHERE current_user.username = auth.jwt() ->> 'role'
+        WHERE (current_user.username = auth.jwt() ->> 'email' OR current_user.username = auth.jwt() ->> 'user_name')
         AND current_user.role = 'admin'
     ));
 
@@ -43,7 +43,7 @@ CREATE POLICY "Admins can manage clients" ON public.clients
     FOR ALL TO authenticated
     USING (EXISTS (
         SELECT 1 FROM public.users current_user
-        WHERE current_user.username = auth.jwt() ->> 'role' 
+        WHERE (current_user.username = auth.jwt() ->> 'email' OR current_user.username = auth.jwt() ->> 'user_name')
         AND current_user.role = 'admin'
     ));
 
@@ -60,7 +60,7 @@ CREATE POLICY "Admins can manage project types" ON public.project_types
     FOR ALL TO authenticated
     USING (EXISTS (
         SELECT 1 FROM public.users current_user
-        WHERE current_user.username = auth.jwt() ->> 'role' 
+        WHERE (current_user.username = auth.jwt() ->> 'email' OR current_user.username = auth.jwt() ->> 'user_name')
         AND current_user.role = 'admin'
     ));
 
@@ -70,19 +70,19 @@ CREATE POLICY "Admins can manage project types" ON public.project_types
 -- Users bisa melihat log mereka sendiri
 CREATE POLICY "Users can view own logs" ON public.time_tracker_logs
     FOR SELECT
-    USING (user_name = auth.jwt() ->> 'role');
+    USING (user_name = auth.jwt() ->> 'email' OR user_name = auth.jwt() ->> 'user_name');
 
 -- Users bisa menambah log mereka sendiri
 CREATE POLICY "Users can insert own logs" ON public.time_tracker_logs
     FOR INSERT
-    WITH CHECK (user_name = auth.jwt() ->> 'role');
+    WITH CHECK (user_name = auth.jwt() ->> 'email' OR user_name = auth.jwt() ->> 'user_name');
 
 -- Admin bisa mengelola semua logs
 CREATE POLICY "Admins can manage all logs" ON public.time_tracker_logs
     FOR ALL
     USING (EXISTS (
         SELECT 1 FROM public.users current_user
-        WHERE current_user.username = auth.jwt() ->> 'role' 
+        WHERE (current_user.username = auth.jwt() ->> 'email' OR current_user.username = auth.jwt() ->> 'user_name')
         AND current_user.role = 'admin'
     ));
 

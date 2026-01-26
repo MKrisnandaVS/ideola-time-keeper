@@ -53,7 +53,7 @@ const Login = () => {
         <ThemeToggle />
       </div>
 
-      <div className="container mx-auto px-4 sm:px-12 lg:px-16 w-full">
+      <div className="container mx-auto px-6 sm:px-16 lg:px-24 w-full">
         <div className="flex justify-center">
           <Card className="w-full max-w-md bg-card border-border">
         <CardHeader className="text-center pb-4">

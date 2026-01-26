@@ -10,7 +10,7 @@ const NotFound = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted">
-      <div className="container mx-auto px-4 sm:px-12 lg:px-16">
+      <div className="container mx-auto px-6 sm:px-16 lg:px-24">
         <div className="flex justify-center">
           <div className="text-center">
             <h1 className="mb-4 text-4xl font-bold">404</h1>

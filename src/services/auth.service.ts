@@ -37,6 +37,13 @@ export const login = async (username: string, password: string) => {
     throw new Error("Invalid username or password");
   }
 
+  // Generate a more secure random token
+  const generateSecureToken = (): string => {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  };
+
   // Create session with expiry
   const session: AuthSession = {
     user: {
@@ -46,7 +53,7 @@ export const login = async (username: string, password: string) => {
       full_name: user.full_name,
       created_at: user.created_at,
     },
-    token: `${user.id}-${Date.now()}`, // Simple token
+    token: generateSecureToken(), // Cryptographically secure token
     expiresAt: calculateExpiry(),
   };
 
@@ -61,6 +68,7 @@ export const saveSession = (session: AuthSession): void => {
     ...session,
     expiresAt: calculateExpiry(),
   };
+  // Store in localStorage but consider this sensitive data
   localStorage.setItem(SESSION_KEY, JSON.stringify(sessionWithExpiry));
 };
 

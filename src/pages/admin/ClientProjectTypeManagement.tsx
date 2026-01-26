@@ -321,7 +321,7 @@ const ClientProjectTypeManagement = () => {
       </header>
 
       <div className="p-6">
-        <div className="container mx-auto px-4 sm:px-18 lg:px-24">
+        <div className="container mx-auto px-6 sm:px-24 lg:px-32">
           <div className="space-y-6">
         {/* Clients Section */}
         <Card className="bg-card border-border">

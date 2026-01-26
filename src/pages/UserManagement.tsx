@@ -103,7 +103,7 @@ const UserManagement = () => {
       setFormData({
         username: "",
         password: "",
-        role: "client",
+        role: "member",
         full_name: "",
       });
     }
@@ -263,7 +263,7 @@ const UserManagement = () => {
       </header>
 
       <div className="p-6">
-        <div className="container mx-auto px-4 sm:px-12 lg:px-16">
+        <div className="container mx-auto px-6 sm:px-16 lg:px-24">
           <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg uppercase tracking-wider">
