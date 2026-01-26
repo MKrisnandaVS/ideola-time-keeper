@@ -37,12 +37,15 @@ const DailyTask = ({ logs, username, fullName }: DailyTaskProps) => {
     return logDate.getTime() === today.getTime() && 
            log.duration_minutes !== null &&
            log.user_name === username; // Only show tasks for the current user
+  }).sort((a, b) => {
+    // Sort by start_time to ensure tasks are ordered chronologically
+    return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
   });
 
   const formatDateTime = (dateString: string) => {
     if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }); // Format: HH:MM in 24-hour format
   };
 
   const formatDuration = (minutes: number) => {
