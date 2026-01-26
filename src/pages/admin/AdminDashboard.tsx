@@ -63,10 +63,10 @@ const AdminDashboard = () => {
     // Fetch active users immediately on mount
     fetchActiveUsers();
     
-    // Then refresh every 30 seconds
+    // Then refresh every 5 seconds
     const interval = setInterval(() => {
       fetchActiveUsers();
-    }, 30000);
+    }, 5000);
     
     return () => clearInterval(interval);
   }, []); // Empty dependency - runs once on mount and sets up interval
@@ -87,14 +87,20 @@ const AdminDashboard = () => {
       const active: ActiveUser[] = activeLogs.map(log => {
         const startTime = new Date(log.start_time).getTime();
         const now = Date.now();
-        const elapsedMinutes = Math.floor((now - startTime) / 60000);
+        const elapsedTotalSeconds = Math.floor((now - startTime) / 1000);
+        const elapsedMinutes = Math.floor(elapsedTotalSeconds / 60);
+        const elapsedHours = Math.floor(elapsedMinutes / 60);
+        const remainingMinutes = elapsedMinutes % 60;
+        const remainingSeconds = elapsedTotalSeconds % 60;
 
         return {
           username: log.user_name,
           full_name: userMap.get(log.user_name) || log.user_name,
           client_name: log.client_name,
           project_name: log.project_name,
-          elapsed_minutes: elapsedMinutes,
+          elapsed_minutes: remainingMinutes,
+          elapsed_seconds: remainingSeconds,
+          elapsed_hours: elapsedHours,
         };
       });
 
@@ -159,7 +165,7 @@ const AdminDashboard = () => {
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-primary animate-pulse" />
               <span className="text-sm font-mono font-bold text-primary">
-                {activeUser.elapsed_minutes} min
+                {activeUser.elapsed_hours > 0 ? `${activeUser.elapsed_hours}h ` : ''}{activeUser.elapsed_minutes}m {activeUser.elapsed_seconds}s
               </span>
             </div>
           </div>
@@ -340,7 +346,7 @@ const AdminDashboard = () => {
       </header>
 
       <div className="flex-1 overflow-auto p-6">
-        <div className="container mx-auto px-4 sm:px-18 lg:px-24">
+        <div className="container mx-auto px-6 sm:px-24 lg:px-32">
           <div className="space-y-6">
         {/* 1. Active Users */}
         <Card className="bg-card border-border">
